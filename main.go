@@ -1,8 +1,11 @@
 package main
 
 import (
+	"bufio"
 	"flag"
 	"net"
+	"os"
+	"strings"
 	"sync"
 	"time"
 )
@@ -17,18 +20,6 @@ var (
 
 	target     = flag.String("t", "", "target addr with port")
 	targetFile = flag.String("f", "target.txt", "target list file")
-)
-
-var (
-	targetList = []*PingTarget{
-		{"vultr_jp_syn", "hnd-jp-ping.vultr.com:80"},
-		{"vultr_la_syn", "lax-ca-us-ping.vultr.com:80"},
-		{"vultr_jp_rst", "hnd-jp-ping.vultr.com:23"},
-		{"vultr_la_rst", "lax-ca-us-ping.vultr.com:23"},
-
-		{"1.1.1.1_syn", "1.1.1.1:443"},
-		{"8.8.8.8_syn", "8.8.8.8:443"},
-	}
 )
 
 func main() {
@@ -49,6 +40,30 @@ func main() {
 		Vln(1, "[dt]", dst, dt, err)
 		return
 	}
+
+	lines, err := readFile(*targetFile)
+	if err != nil {
+		Vln(1, "[list][err]read:", err)
+		return
+	}
+
+	targetList := make([]*PingTarget, 0, 16)
+	for i, line := range lines {
+		args := strings.SplitN(line, "\t", 2)
+		if strings.HasPrefix(args[0], "#") {
+			continue
+		}
+		if len(args) < 2 {
+			continue
+		}
+		Vln(4, "[list]", i, args)
+
+		targetList = append(targetList, &PingTarget{
+			args[0],
+			args[1],
+		})
+	}
+	Vln(3, "[list]total", len(targetList))
 
 	// for service
 	go run(targetList, *workerCount)
@@ -75,4 +90,35 @@ func run(targetList []*PingTarget, workerCount int) {
 		}
 		time.Sleep(time.Until(nextTime))
 	}
+}
+
+func readFile(path string) ([]string, error) {
+	af, err := os.Open(path)
+	if err != nil {
+		Vln(2, "[open]", err)
+		return nil, err
+	}
+	defer af.Close()
+
+	data := make([]string, 0)
+	r := bufio.NewReader(af)
+	b, err := r.Peek(3)
+	if err != nil {
+		return nil, err
+	}
+	if b[0] == 0xEF && b[1] == 0xBB && b[2] == 0xBF {
+		r.Discard(3)
+	}
+	for {
+		line, err := r.ReadString('\n')
+		if err != nil {
+			break
+		}
+
+		line = strings.Trim(line, "\n\r\t")
+		data = append(data, line)
+	}
+
+	Vln(7, "[dbg][file]", data)
+	return data, nil
 }

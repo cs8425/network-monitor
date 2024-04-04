@@ -1,0 +1,10 @@
+# test addr
+vultr_jp_syn	hnd-jp-ping.vultr.com:80
+vultr_la_syn	lax-ca-us-ping.vultr.com:80
+
+vultr_jp_rst	hnd-jp-ping.vultr.com:23
+vultr_la_rst	lax-ca-us-ping.vultr.com:23
+
+8.8.8.8	8.8.8.8:443
+1.1.1.1	1.1.1.1:443
+
