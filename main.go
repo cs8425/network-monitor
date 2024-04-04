@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"flag"
+	"math"
 	"net"
 	"os"
 	"strings"
@@ -65,8 +66,17 @@ func main() {
 	}
 	Vln(3, "[list]total", len(targetList))
 
+	// calc minimum worker for non-blocking in worst case
+	reqps := float64(*dt) / float64(*timeout)
+	n := int(math.Ceil(float64(len(targetList)) / reqps))
+	if *workerCount < n {
+		Vln(2, "[worker]change for avoiding worst case", n, "x", reqps, ">=", len(targetList), ", was", *workerCount)
+	} else {
+		n = *workerCount
+	}
+
 	// for service
-	go run(targetList, *workerCount)
+	go run(targetList, n)
 
 	WebStart(*bind)
 }
