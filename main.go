@@ -13,7 +13,7 @@ import (
 
 var (
 	verbosity = flag.Int("v", 2, "verbosity")
-	bind      = flag.String("l", ":8080", "max worker for RTT test")
+	bind      = flag.String("l", ":8080", "bind address for prometheus metrics server")
 
 	timeout     = flag.Int("to", SYN_INIT_TIMEOUT, "SYN timeout in ms")
 	dt          = flag.Int("dt", 5000, "interval between test in ms")
